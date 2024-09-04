@@ -1,4 +1,6 @@
 async function rank(songs) {
+    document.getElementById('grid').style.display = 'grid';
+
     let sorted = [];
     for (let i = 0; i < songs.length; i++) {
         const song1 = songs[i];
@@ -36,23 +38,23 @@ function compareSongs(song1, song2) {
         song1Element.querySelector('.song-title').innerHTML = song1;
         song2Element.querySelector('.song-title').innerHTML = song2;
 
-        function handleChoice1() {
+        function choose1() {
             resolve(1);
             removeListeners();
         }
 
-        function handleChoice2() {
+        function choose2() {
             resolve(2);
             removeListeners();
         }
 
         function removeListeners() {
-            song1Element.removeEventListener('click', handleChoice1);
-            song2Element.removeEventListener('click', handleChoice2);
+            song1Element.removeEventListener('click', choose1);
+            song2Element.removeEventListener('click', choose2);
         }
 
-        song1Element.addEventListener('click', handleChoice1);
-        song2Element.addEventListener('click', handleChoice2);
+        song1Element.addEventListener('click', choose1);
+        song2Element.addEventListener('click', choose2);
     });
 }
 
@@ -70,5 +72,15 @@ function displayRankedSongs(songs) {
     }
 }
 
-songs = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"];
-rank(songs);
+function enterSongs() {
+    const enterSongs = document.getElementById('enter-songs');
+    enterSongs.addEventListener('click', () => {
+        const songsElement = document.getElementById('song-list');
+        const songs = songsElement.value.split(', ');
+        enterSongs.style.display = 'none';
+        songsElement.style.display = 'none';
+        rank(songs);
+    });
+}
+
+enterSongs();

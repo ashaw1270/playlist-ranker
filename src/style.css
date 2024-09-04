@@ -1,5 +1,5 @@
 #grid {
-    display: grid;
+    display: none;
     place-items: center;
     grid-template-columns: repeat(4, 1fr);
     height: 100vh;
