@@ -57,5 +57,7 @@ int main() {
     vector<string> songs = getSongs();
     cout << endl;
     vector<string> sorted = sort(songs);
+    cout << endl;
     printSongs(sorted);
+    cout << endl;
 }
