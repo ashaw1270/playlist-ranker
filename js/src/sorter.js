@@ -70,7 +70,7 @@ async function rank() {
             }
         }
     }
-    //displayRankedSongs(sorted);
+    
     downloadSongs(sorted);
 }
 
@@ -101,50 +101,3 @@ function compareSongs(song1, song2) {
         song2Element.addEventListener('click', choose2);
     });
 }
-
-function displayRankedSongs(ranked) {
-    document.getElementById('song1').remove();
-    document.getElementById('song2').remove();
-
-    const gridElement = document.getElementById('grid');
-    
-    for (let song of ranked) {
-        const songElement = document.createElement('div');
-        songElement.classList.add('song');
-        songElement.innerHTML = song;
-        gridElement.appendChild(songElement);
-    }
-}
-
-function readSong() {
-    const songElement = document.getElementById('song-input');
-    const song = songElement.value;
-    if (song) {
-        songs.push(song);
-        songElement.value = '';
-    }
-}
-
-function enterSongs() {
-    document.addEventListener('keydown', event => {
-        if (event.key === 'Enter') {
-            readSong();
-        }
-    });
-
-    const songElement = document.getElementById('song-input');
-    const enterSong = document.getElementById('enter-song');
-    const done = document.getElementById('done');
-
-    enterSong.addEventListener('click', readSong);
-
-    done.addEventListener('click', () => {
-        readSong();
-        songElement.style.display = 'none';
-        enterSong.style.display = 'none';
-        done.style.display = 'none';
-        rank();
-    });
-}
-
-enterSongs();
