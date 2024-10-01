@@ -1,4 +1,45 @@
 const songs = [];
+let filename;
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fileInput').addEventListener('change', event => {
+        const file = event.target.files[0];
+        filename = file.name;
+    
+        if (file) {
+            const reader = new FileReader();
+            
+            reader.onload = e => {
+                const fileContents = e.target.result;
+                const lines = fileContents.split('\n');
+                songs.push(...lines.slice(0, lines.length - 1));
+                rank();
+            };
+            
+            reader.onerror = () => console.error("Error reading file");
+    
+            reader.readAsText(file);
+        }
+    });
+});
+
+function downloadSongs(songs) {
+    document.getElementById('song1').remove();
+    document.getElementById('song2').remove();
+
+    let text = "";
+    for (const song of songs) {
+        text += `${song}\n`;
+    }
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename.slice(0, filename.length - 4)}Sorted.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 async function rank() {
     document.getElementById('grid').style.display = 'grid';
@@ -29,7 +70,8 @@ async function rank() {
             }
         }
     }
-    displayRankedSongs(sorted);
+    //displayRankedSongs(sorted);
+    downloadSongs(sorted);
 }
 
 function compareSongs(song1, song2) {
