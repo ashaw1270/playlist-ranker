@@ -6,15 +6,23 @@
         <link rel="stylesheet" href="js/src/style.css">
     </head>
     <body>
-        <div id="grid">
-            <button class="song clickable" id="song1">
-                <div class="song-title">Song1</div>
-            </button>
-            <button class="song clickable" id="song2">
-                <div class="song-title">Song2</div>
-            </button>
-        </div>
         <script src="js/src/sorter.js"></script>
-        <input type="file" id="fileInput" accept=".txt">
+        <script src="musickit.js" data-web-components async></script>
+        <div id="grid">
+            <div class="song-block" id="song-block-1">
+                <iframe class="song" title="Media player" id="song1" 
+                    sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
+                    allow="autoplay *; encrypted-media *; clipboard-write">
+                </iframe>
+                <button class="choose clickable" id="choose-1"></button>
+            </div>
+            <div class="song-block" id="song-block-2">
+                <iframe class="song" title="Media player" id="song2" 
+                    sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
+                    allow="autoplay *; encrypted-media *; clipboard-write">
+                </iframe>
+                <button class="choose clickable" id="choose-2"></button>
+            </div>
+        </div>
     </body>
 </html>

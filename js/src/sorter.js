@@ -1,47 +1,91 @@
-const songs = [];
-let filename;
+let music;
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('fileInput').addEventListener('change', event => {
-        const file = event.target.files[0];
-        filename = file.name;
-    
-        if (file) {
-            const reader = new FileReader();
-            
-            reader.onload = e => {
-                const fileContents = e.target.result;
-                const lines = fileContents.split('\n');
-                songs.push(...lines.slice(0, lines.length - 1));
-                rank();
-            };
-            
-            reader.onerror = () => console.error("Error reading file");
-    
-            reader.readAsText(file);
-        }
-    });
-});
-
-function downloadSongs(songs) {
-    document.getElementById('song1').remove();
-    document.getElementById('song2').remove();
-
-    let text = "";
-    for (const song of songs) {
-        text += `${song}\n`;
+document.addEventListener('musickitloaded', async () => {
+    try {
+        await MusicKit.configure({
+            developerToken: `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjY4OUc3OFZMWFcifQ.eyJpYXQiOjE3MjgzNjE4NTksImV4cCI6MTc0MzkxMzg1OSwiaXNzIjoiSDhGUlk0MjM1MyJ9.mwSGlFxrrD35AeRHFNlJ-S9-MbD6hNP4dAMKX9k2X8euJmcAtk70L3tyRgCnyUvlx0FHtoAYsIEy9YnojJQOpA`,
+            app: {
+                name: 'Playlist Ranker',
+                build: '1.0.0',
+            }
+        });
+    } catch (err) {
+        console.log(err);
     }
 
-    const blob = new Blob([text], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${filename.slice(0, filename.length - 4)}Sorted.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    music = MusicKit.getInstance();
+    try {
+        await music.authorize();
+    } catch (error) {
+        console.log(error);
+    }
+
+    const playlist = await getPlaylist('Bangers');
+    const songs = await getSongs(playlist);
+    const ranked = await rank(songs);
+    document.getElementById('grid').style.display = 'none';
+    console.log(ranked);
+});
+
+async function getPlaylist(playlistName) {
+    let playlistID;
+
+    try {
+        const response = await music.api.library.playlists();
+        for (const playlist of response) {
+            if (playlist.attributes.name === playlistName) {
+                playlistID = playlist.id;
+                break;
+            }
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    if (playlistID) {
+        try {
+            return await music.api.library.playlist(playlistID);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    return null;
 }
 
-async function rank() {
+async function getSongs(playlist) {
+    let songs = [];
+    for (const playlistSong of playlist.relationships.tracks.data) {
+        try {
+            const playParams = playlistSong.attributes.playParams;
+            const id = playParams.catalogId || playParams.purchasedId || playParams.reportingId;
+            const song = await music.api.song(id);
+            songs.push(song);
+        } catch (error) {
+            console.log(playlistSong, error);
+        }
+    }
+    return songs;
+}
+
+/*async function embedSong(songNum, song) {
+    const catalogID = song.attributes.playParams.catalogId;
+    let albumID, songID;
+    try {
+        const song = await music.api.song(catalogID);
+        albumID = song.relationships.albums.data[0].id;
+        songID = song.id;
+    } catch (error) {
+        console.log(error);
+    }
+    const countryCode = music.storefrontId || 'us';
+    const embedURL = `https://embed.music.apple.com/${countryCode}/album/${albumID}?i=${songID}&itscg=30200&itsct=music_box_player&app=music&theme=auto`;
+    const songElement = document.getElementById(`song${songNum}`);
+    songElement.src = embedURL;
+    songElement.style.display = 'flex';
+}*/
+
+async function rank(songs) {
     document.getElementById('grid').style.display = 'grid';
 
     let sorted = [];
@@ -71,16 +115,24 @@ async function rank() {
         }
     }
     
-    downloadSongs(sorted);
+    return sorted;
 }
 
-function compareSongs(song1, song2) {
+async function compareSongs(song1, song2) {
     return new Promise(resolve => {
+        document.getElementById('grid').style.display = 'grid';
+
         const song1Element = document.getElementById('song1');
         const song2Element = document.getElementById('song2');
 
-        song1Element.querySelector('.song-title').innerHTML = song1;
-        song2Element.querySelector('.song-title').innerHTML = song2;
+        song1Element.src = `https://embed.music.apple.com/us/song/${song1.id}`;
+        song2Element.src = `https://embed.music.apple.com/us/song/${song2.id}`;
+
+        const choose1Element = document.getElementById('choose-1');
+        const choose2Element = document.getElementById('choose-2');
+
+        choose1Element.innerText = song1.attributes.name;
+        choose2Element.innerText = song2.attributes.name;
 
         function choose1() {
             resolve(1);
@@ -93,11 +145,11 @@ function compareSongs(song1, song2) {
         }
 
         function removeListeners() {
-            song1Element.removeEventListener('click', choose1);
-            song2Element.removeEventListener('click', choose2);
+            choose1Element.removeEventListener('click', choose1);
+            choose2Element.removeEventListener('click', choose2);
         }
 
-        song1Element.addEventListener('click', choose1);
-        song2Element.addEventListener('click', choose2);
+        choose1Element.addEventListener('click', choose1);
+        choose2Element.addEventListener('click', choose2);
     });
 }
