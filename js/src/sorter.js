@@ -1,9 +1,12 @@
 let music;
+let musicUserToken;
+
+const developerToken = `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjY4OUc3OFZMWFcifQ.eyJpYXQiOjE3MjgzNjE4NTksImV4cCI6MTc0MzkxMzg1OSwiaXNzIjoiSDhGUlk0MjM1MyJ9.mwSGlFxrrD35AeRHFNlJ-S9-MbD6hNP4dAMKX9k2X8euJmcAtk70L3tyRgCnyUvlx0FHtoAYsIEy9YnojJQOpA`;
 
 document.addEventListener('musickitloaded', async () => {
     try {
         await MusicKit.configure({
-            developerToken: `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjY4OUc3OFZMWFcifQ.eyJpYXQiOjE3MjgzNjE4NTksImV4cCI6MTc0MzkxMzg1OSwiaXNzIjoiSDhGUlk0MjM1MyJ9.mwSGlFxrrD35AeRHFNlJ-S9-MbD6hNP4dAMKX9k2X8euJmcAtk70L3tyRgCnyUvlx0FHtoAYsIEy9YnojJQOpA`,
+            developerToken,
             app: {
                 name: 'Playlist Ranker',
                 build: '1.0.0',
@@ -15,23 +18,32 @@ document.addEventListener('musickitloaded', async () => {
 
     music = MusicKit.getInstance();
     try {
-        await music.authorize();
+        musicUserToken = await music.authorize();
     } catch (error) {
         console.log(error);
     }
 
-    const playlist = await getPlaylist('Bangers');
-    const songs = await getSongs(playlist);
-    const ranked = await rank(songs);
-    document.getElementById('grid').style.display = 'none';
-    console.log(ranked);
+    //const playlist = await getPlaylist('Activities');
+    //const playlist2 = await getPlaylist('Nu-disco');
+    //const songs = await getSongs(playlist);
+    //const ranked = await rank(songs);
+    //document.getElementById('grid').style.display = 'none';
+    //const rankedPlaylist = await createPlaylist('Ranked Nu-disco', ranked);
+    //verifyPlaylist(ranked, rankedPlaylist.relationships.tracks.data);
+    //document.getElementById('grid').style.display = 'grid';
+    choosePlaylist();
+    //const song1Element = document.getElementById('song1');
+    //song1Element.src = embedPlaylist(playlist.attributes.playParams.globalId);
+    //const song2Element = document.getElementById('song2');
+    //song2Element.src = embedPlaylist(playlist2.attributes.playParams.globalId);
+    //console.log(playlist);
 });
 
 async function getPlaylist(playlistName) {
     let playlistID;
 
     try {
-        const response = await music.api.library.playlists();
+        const response = await music.api.library.playlists({ limit: 100 });
         for (const playlist of response) {
             if (playlist.attributes.name === playlistName) {
                 playlistID = playlist.id;
@@ -53,6 +65,23 @@ async function getPlaylist(playlistName) {
     return null;
 }
 
+async function choosePlaylist() {
+    const playlistsElement = document.getElementById('playlists');
+    playlistsElement.style.display = 'block';
+
+    const playlists = await music.api.library.playlists();
+    for (const pl of playlists) {
+        const playlist = await music.api.library.playlist(pl.id);
+        if (playlist.attributes.artwork) {
+            const playlistElement = document.createElement('div');
+            const cover = document.createElement('img');
+            cover.src = playlist.attributes.artwork.url;
+            playlistElement.appendChild(cover);
+            playlistsElement.appendChild(playlistElement);
+        }
+    }
+}
+
 async function getSongs(playlist) {
     let songs = [];
     for (const playlistSong of playlist.relationships.tracks.data) {
@@ -66,6 +95,51 @@ async function getSongs(playlist) {
         }
     }
     return songs;
+}
+
+async function createPlaylist(name, songs) {
+    const response = await fetch('https://api.music.apple.com/v1/me/library/playlists', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${developerToken}`,
+            'Music-User-Token': musicUserToken
+        },
+        body: JSON.stringify({
+            attributes: {
+                name
+            }
+        })
+    });
+    const data = await response.json();
+    const playlistID = data.data[0].id;
+
+    await fetch(`https://api.music.apple.com/v1/me/library/playlists/${playlistID}/tracks`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${developerToken}`,
+            'Music-User-Token': musicUserToken
+        },
+        body: JSON.stringify({
+            data: songs.map(song => ({
+                id: song.id,
+                type: 'songs'
+            }))
+        })
+    });
+    
+    return await music.api.library.playlist(playlistID);
+}
+
+async function verifyPlaylist(songs, playlist) {
+    let i = 0, j = 0;
+    while (i < songs.length) {
+        if (songs[i].id !== playlist[j].id) {
+            console.log(`${songs[i].attributes.playParams.catalogId} is missing`);
+        } else {
+            j++;
+        }
+        i++;
+    }
 }
 
 /*async function embedSong(songNum, song) {
@@ -125,8 +199,8 @@ async function compareSongs(song1, song2) {
         const song1Element = document.getElementById('song1');
         const song2Element = document.getElementById('song2');
 
-        song1Element.src = `https://embed.music.apple.com/us/song/${song1.id}`;
-        song2Element.src = `https://embed.music.apple.com/us/song/${song2.id}`;
+        song1Element.src = embedSong(song1.id);
+        song2Element.src = embedSong(song2.id);
 
         const choose1Element = document.getElementById('choose-1');
         const choose2Element = document.getElementById('choose-2');
@@ -153,3 +227,6 @@ async function compareSongs(song1, song2) {
         choose2Element.addEventListener('click', choose2);
     });
 }
+
+const embedSong = id => `https://embed.music.apple.com/us/song/${id}`;
+const embedPlaylist = id => `https://embed.music.apple.com/us/playlist/${id}`;
