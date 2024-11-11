@@ -2,12 +2,16 @@ let music;
 let musicUserToken;
 
 let developerToken;
-fetch('/dev_token')
-    .then(response => response.json())
-    .then(data => developerToken = data.dev_token)
-    .catch(error => console.error('Error fetching token:', error));
+
+async function getDevToken() {
+    const response = await fetch('/dev_token');
+    const data = await response.json();
+    return data.dev_token;
+}
 
 document.addEventListener('musickitloaded', async () => {
+    developerToken = await getDevToken();
+
     try {
         await MusicKit.configure({
             developerToken,
