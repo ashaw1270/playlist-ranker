@@ -1,7 +1,11 @@
 let music;
 let musicUserToken;
 
-const developerToken = `eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjY4OUc3OFZMWFcifQ.eyJpYXQiOjE3MjgzNjE4NTksImV4cCI6MTc0MzkxMzg1OSwiaXNzIjoiSDhGUlk0MjM1MyJ9.mwSGlFxrrD35AeRHFNlJ-S9-MbD6hNP4dAMKX9k2X8euJmcAtk70L3tyRgCnyUvlx0FHtoAYsIEy9YnojJQOpA`;
+let developerToken;
+fetch('/dev_token')
+    .then(response => response.json())
+    .then(data => developerToken = data.dev_token)
+    .catch(error => console.error('Error fetching token:', error));
 
 document.addEventListener('musickitloaded', async () => {
     try {
