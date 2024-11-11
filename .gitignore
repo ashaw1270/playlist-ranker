@@ -2,3 +2,5 @@
 .DS_Store
 *.dSYM
 *.p8
+cpp/
+.env
